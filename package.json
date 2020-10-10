@@ -4,7 +4,8 @@
   "description": "Algebraic Sum Types for Javascript",
   "main": "src/styp.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node build.js dist styp"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,11 @@
   "bugs": {
     "url": "https://github.com/computationalabstraction/styp/issues"
   },
-  "homepage": "https://github.com/computationalabstraction/styp#readme"
+  "homepage": "https://github.com/computationalabstraction/styp#readme",
+  "devDependencies": {
+    "@babel/core": "^7.11.6",
+    "@babel/preset-env": "^7.11.5",
+    "babel-preset-minify": "^0.5.1",
+    "jest": "^26.5.2"
+  }
 }
