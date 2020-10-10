@@ -1,6 +1,6 @@
-<div>
+<div align="center">
 
-<img src="static/stype.png" />
+<img src="static/stype.png" height="150em" width="200em"/>
 
 ## stype
 
