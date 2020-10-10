@@ -1,0 +1,19 @@
+{
+  "name": "styp",
+  "version": "0.0.1",
+  "description": "Algebraic Sum Types for Javascript",
+  "main": "src/styp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/computationalabstraction/styp.git"
+  },
+  "author": "Archan Patkar",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/computationalabstraction/styp/issues"
+  },
+  "homepage": "https://github.com/computationalabstraction/styp#readme"
+}
