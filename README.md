@@ -7,7 +7,7 @@
 <hr/>
 </div>
 
-Styp (Sum TYPes) in Javascript. The library provides *tagged* and *tagged sum* types, the distribution of the library is **611** bytes. This libary has been inspired by languages like `Haskell`, `F#` and `OCaml` which provide sum types natively. Styp has also taken inspiration from [daggy]() (a library for creating sum types in Javascript).
+Styp (Sum TYPes) in Javascript. The library provides *tagged* and *tagged sum* types, the distribution size of the library is **611** bytes(Gzipped). This libary has been inspired by languages like `Haskell`, `F#` and `OCaml` which provide sum types natively. Styp has also taken inspiration from [daggy]() (a library for creating sum types in Javascript).
 
 #### `Example Code`
 ```javascript
