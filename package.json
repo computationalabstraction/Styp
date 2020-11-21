@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/computationalabstraction/styp#readme",
   "devDependencies": {
-    "@babel/core": "^7.11.6",
+    "@babel/core": "^7.12.3",
     "@babel/preset-env": "^7.11.5",
     "babel-preset-minify": "^0.5.1",
     "jest": "^26.6.3"
