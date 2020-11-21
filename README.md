@@ -40,6 +40,7 @@ console.log(test2.toString()); // -> Maybe.Just(0)
 ```
 
 ## Installation
+> Not yet published on NPM (will be soon)
 
 ### Node
 ```
