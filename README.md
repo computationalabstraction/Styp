@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="static/styp.png" height="150em" width="210em"/>
+<img src="static/styp.png" height="120em" width="240em"/>
 
 <h2> Styp </h2>
 
