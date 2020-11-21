@@ -55,9 +55,6 @@ function sum(typename, constructors) {
     return Object.freeze(stype);
 }
 
-const styp = Object.freeze({
-    tagged: tagged,
-    sum: sum
-});
+const styp = Object.freeze({ tagged: tagged, sum: sum });
 
 if(typeof module != "undefined") module.exports = styp;
