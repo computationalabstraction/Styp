@@ -51,7 +51,7 @@ npm i styp
 <script src="https://unpkg.com/styp"></script>
 ```
 
-### Documentation
+## Documentation
 > Underconstruction
 
 ...
