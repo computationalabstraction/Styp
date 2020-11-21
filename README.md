@@ -23,21 +23,23 @@ const Maybe = sum("Maybe", {
     Nothing: []
 });
 
-let test = Maybe.Just(10)
-console.log(test.toString())
-console.log()
-console.log(
-    test.cata({
+let test1 = Maybe.Just(10)
+
+console.log(test1.toString()); // -> Maybe.Just(10)
+console.log(Maybe.is(test1)); // -> true
+console.log(Maybe.Just.is(test1)); // -> true
+console.log(Maybe.Nothing.is(test1)); // -> false
+
+let test2 = Maybe.Nothing
+    .cata({
         Just: i => i,
         Nothing: () => Maybe.Just(0)
-    }).toString();
-); // -> Maybe.Just(10)
+    });
 
-console.log(
-    test.cata({
-        Just: i => i,
-        Nothing: () => Maybe.Just(0)
-    }).toString();
-); // -> Maybe.Just(10)
-
+console.log(test2.toString); // -> Maybe.Just(0)
 ```
+
+### Documentation
+> Underconstruction
+
+...
