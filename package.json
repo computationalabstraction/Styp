@@ -2,9 +2,10 @@
   "name": "styp",
   "version": "0.0.1",
   "description": "Algebraic Sum Types for Javascript",
-  "main": "src/styp.js",
+  "main": "dist/styp.min.js",
+  "unpkg": "dist/styp.min.js.gz",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx jest --coverage",
     "build": "node build.js dist styp"
   },
   "repository": {
@@ -21,6 +22,6 @@
     "@babel/core": "^7.11.6",
     "@babel/preset-env": "^7.11.5",
     "babel-preset-minify": "^0.5.1",
-    "jest": "^26.5.2"
+    "jest": "^26.6.3"
   }
 }
