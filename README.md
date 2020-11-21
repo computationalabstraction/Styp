@@ -2,8 +2,7 @@
 
 <img src="static/styp.png" height="120em" width="240em"/>
 
-<h2> Styp </h2>
-
+<hr/>
 </div>
 
 
