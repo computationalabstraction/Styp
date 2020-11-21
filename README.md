@@ -23,7 +23,7 @@ const Maybe = sum("Maybe", {
     Nothing: []
 });
 
-let test1 = Maybe.Just(10)
+let test1 = Maybe.Just(10);
 
 console.log(test1.toString()); // -> Maybe.Just(10)
 console.log(Maybe.is(test1)); // -> true
@@ -32,11 +32,11 @@ console.log(Maybe.Nothing.is(test1)); // -> false
 
 let test2 = Maybe.Nothing
     .cata({
-        Just: i => i,
+        Just: x => x,
         Nothing: () => Maybe.Just(0)
     });
 
-console.log(test2.toString); // -> Maybe.Just(0)
+console.log(test2.toString()); // -> Maybe.Just(0)
 ```
 
 ### Documentation
