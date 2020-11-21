@@ -1,10 +1,24 @@
 const $type = Symbol("Type");
+const $sumT = Symbol("SumType");
 const $schema = Symbol("Schema");
 const $cons = Symbol("Constructors");
 
-// Add validation and checks
-// Generate errors
-// Abstract common code
+const tfrom = function (obj) { return this(...this.prototype[$schema].map((v) => obj[v])); }
+const tis = function (r) { return r instanceof this; }
+const tctoString = function() {return this.prototype[$type]}
+const titoString = function() {
+    return `${this[$type]}(${this[$schema].map(f => this[f]).join(",")})`;
+};
+const sis = function(obj) {
+    return this.prototype[$cons]
+            .reduce((acc,v) => acc || this[v].is(obj),false);
+}
+const cata = function (sel) {
+    return this[$cons].reduce((acc, v) => !acc?this[$sumT][v].is(this)?sel[v](this):null:acc,null);
+};
+const nis = function(obj) { return obj == this; };
+const ntoString = function() { return this[$type] };
+
 function tagged(typename, fields) {
     const constructor = function (...values) {
         if(values.length < fields.length) throw new TypeError(`This constructor requires ${fields.length} values`);
@@ -13,50 +27,29 @@ function tagged(typename, fields) {
         obj.__proto__ = constructor.prototype;
         return Object.freeze(obj);
     };
-    constructor.prototype[$type] = typename;
-    constructor.prototype[$schema] = fields;
-    constructor.from = function(obj) { 
-        return constructor(...fields.map((v) => obj[v]));
-    };
-    constructor.is = function(r) {
-        return r instanceof constructor;
-    };
-    constructor.toString = function() {
-        return typename;
-    };
-    constructor.prototype.toString = function() {
-        return `${typename}(${fields.map(f => this[f]).join(",")})`;
-    };
+    Object.assign(constructor.prototype, { [$type]:typename, [$schema]:fields, toString:titoString });
+    Object.assign(constructor, { from:tfrom, is:tis, toString:tctoString });
     return constructor;
 }
 
 function sum(typename, constructors) {
-    let stype = {};
+    let stype = { is:sis };
     stype.prototype = {
-        [$cons]: []
-    };
-    for(let c in constructors) stype.prototype[$cons].push(c);
-    stype.is = function(obj) {
-        return stype.prototype[$cons]
-                .reduce((acc,v) => acc || stype[v].is(obj),false);
-    }
-    stype.prototype.cata = function (sel) {
-        return stype.prototype[$cons].reduce((acc, v) => !acc?stype[v].is(this)?sel[v](this):null:acc,null);
+        [$sumT]: stype,
+        [$cons]: Object.keys(constructors),
+        cata:cata
     };
     stype.prototype[$cons].forEach(cons => {
         if(constructors[cons].length) {
             stype[cons] = tagged(`${typename}.${cons}`,constructors[cons]);
             stype[cons].prototype.__proto__ = stype.prototype;
         } else {
-            stype[cons] = {};
-            stype[cons].is = function(obj) {
-                return obj == stype[cons];
-            }
-            stype[cons].toString = function() {
-                return `${typename}.${cons}`
-            }
-            stype[cons].__proto__ = stype.prototype;
-            stype[cons] = Object.freeze(stype[cons]);
+            stype[cons] = {
+                [$type]: `${typename}.${cons}`,
+                is:nis,
+                toString:ntoString,
+                __proto__:stype.prototype
+            };
         }
     });
     return Object.freeze(stype);
