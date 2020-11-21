@@ -7,6 +7,7 @@ const $cons = Symbol("Constructors");
 // Abstract common code
 function tagged(typename, fields) {
     const constructor = function (...values) {
+        if(values.length < fields.length) throw new TypeError(`This constructor requires ${fields.length} values`);
         let obj = {};
         fields.forEach((v,i) => obj[v] = values[i]);
         obj.__proto__ = constructor.prototype;
@@ -26,7 +27,7 @@ function tagged(typename, fields) {
     constructor.prototype.toString = function() {
         return `${typename}(${fields.map(f => this[f]).join(",")})`;
     };
-    return Object.freeze(constructor);
+    return constructor;
 }
 
 function sum(typename, constructors) {
