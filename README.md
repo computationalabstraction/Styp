@@ -52,6 +52,18 @@ npm i styp
 ```
 
 ## Documentation
-> Underconstruction
+> Underconstruction!
 
-...
+#### `tagged(name: String, fields: Array[String]) -> Boolean`
+This function returns a constructor function for the specified data type.
+
+```javascript
+const { tagged } = require("styp");
+
+const Point = tagged("Point", ["x","y"]);
+
+const p1 = Point(10,20);
+const p2 = Point(5,5);
+```
+
+Every constructor function has these functions: **`is`**, **`from`**,**`toString`**
