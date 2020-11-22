@@ -54,22 +54,27 @@ npm i styp
 ## Documentation
 > Underconstruction!
 
-#### `tagged(typename: String, fields: Array[String]) -> Function`
-This function returns a constructor function for the specified data type.
+#### `tagged(typename: String, fields: Array[String]) -> Function | Object`
+This function takes *typename* and *fields* as params and returns a constructor function for the specified data type. In case of empty fields array this function will return an object which you can use like one valued type.
 
 ```javascript
 const { tagged } = require("styp");
 
 const Point = tagged("Point", ["x","y"]);
+const nil = tagged("nil", []); // -> my custom null type 
 
 const p1 = Point(10,20);
 const p2 = Point(5,5);
+
+let temp = nil;
+console.log(nil.is(temp));
+console.log(temp.toString());
 ```
 
 Every constructor functor has these methods: **`is`**, **`from`**,**`toString`**. The instance created by constructor has **`toString`** method and more methods can be added by the user.
 
-#### `sum(typename: String, types: Object) -> Object`
-...
+#### `sum(typename: String, constructors: Object) -> Object`
+This function helps create sum types it takes *typename* and an object which contains name of type constructor and it's values(if any). The function return an object with all the type constructors as constructor functions(as mentioned above).
 
 ```javascript
 const { sum } = require("styp");
