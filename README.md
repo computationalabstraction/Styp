@@ -40,7 +40,6 @@ console.log(times * 5); // -> 5
 ```
 
 ## Installation
-> Not yet published on NPM (will be soon)
 
 ### Node
 ```
