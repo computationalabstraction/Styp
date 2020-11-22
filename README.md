@@ -30,13 +30,13 @@ console.log(Maybe.is(test1)); // -> true
 console.log(Maybe.Just.is(test1)); // -> true
 console.log(Maybe.Nothing.is(test1)); // -> false
 
-let test2 = Maybe.Nothing
+let times = Maybe.Nothing
     .cata({
-        Just: x => x,
-        Nothing: () => Maybe.Just(0)
+        Just: x => x.val,
+        Nothing: () => 1
     });
 
-console.log(test2.toString()); // -> Maybe.Just(0)
+console.log(times * 5); // -> 5
 ```
 
 ## Installation
