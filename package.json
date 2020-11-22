@@ -1,7 +1,7 @@
 {
   "name": "styp",
   "version": "0.0.1",
-  "description": "Algebraic Sum Types for Javascript",
+  "description": "Algebraic Sum Types for Javascript (in beta)",
   "main": "dist/styp.min.js",
   "unpkg": "dist/styp.min.js.gz",
   "scripts": {
