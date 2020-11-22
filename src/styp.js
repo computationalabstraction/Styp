@@ -20,6 +20,7 @@ const nis = function(obj) { return obj == this; };
 const ntoString = function() { return this[$type] };
 
 function tagged(typename, fields) {
+    if(!fields.length) return { [$type]: typename, is:nis, toString:ntoString }
     const constructor = function (...values) {
         if(values.length < fields.length) throw new TypeError(`This constructor requires ${fields.length} values`);
         let obj = {};
@@ -40,17 +41,9 @@ function sum(typename, constructors) {
         cata:cata
     };
     stype.prototype[$cons].forEach(cons => {
-        if(constructors[cons].length) {
-            stype[cons] = tagged(`${typename}.${cons}`,constructors[cons]);
-            stype[cons].prototype.__proto__ = stype.prototype;
-        } else {
-            stype[cons] = {
-                [$type]: `${typename}.${cons}`,
-                is:nis,
-                toString:ntoString,
-                __proto__:stype.prototype
-            };
-        }
+        stype[cons] = tagged(`${typename}.${cons}`,constructors[cons]);
+        if(constructors[cons].length) stype[cons].prototype.__proto__ = stype.prototype;
+        else stype[cons].__proto__ = stype.prototype
     });
     return Object.freeze(stype);
 }
