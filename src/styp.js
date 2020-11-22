@@ -45,7 +45,7 @@ function sum(typename, constructors) {
         if(constructors[cons].length) stype[cons].prototype.__proto__ = stype.prototype;
         else stype[cons].__proto__ = stype.prototype
     });
-    return Object.freeze(stype);
+    return stype;
 }
 
 const styp = Object.freeze({ tagged: tagged, sum: sum });
