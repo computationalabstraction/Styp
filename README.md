@@ -54,7 +54,7 @@ npm i styp
 ## Documentation
 > Underconstruction!
 
-#### `tagged(name: String, fields: Array[String]) -> Boolean`
+#### `tagged(name: String, fields: Array[String]) -> Function`
 This function returns a constructor function for the specified data type.
 
 ```javascript
