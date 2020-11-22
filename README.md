@@ -66,4 +66,5 @@ const p1 = Point(10,20);
 const p2 = Point(5,5);
 ```
 
-Every constructor function has these functions: **`is`**, **`from`**,**`toString`**
+Every constructor function has these functions: **`is`**, **`from`**,**`toString`**. The instance of the constructor has **`toString`** method and more methods can be added.
+
