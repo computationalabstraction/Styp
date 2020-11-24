@@ -89,11 +89,15 @@ console.log(safelyDivide(10,2).toString());
 console.log(safelyDivide(2,0).toString());
 ```
 
-### `Constructors`
-Every constructor(even on sum type object) has the following methods defined -
+### Constructors
+Every constructor function/sum type object has the following methods defined -
+
 * #### `toString`
 * #### `is`
-* #### `from` (not defined on sum type object)
+
+and
+
+* #### `from` (only defined on constructor functions)
 
 #### `{constructor}.toString() -> String`
 ```javascript
@@ -120,10 +124,13 @@ console.log(Point.is({ random:true }));  // -> false
 
 #### `{constructor}.from(obj: Object) -> Object`
 ```javascript
+const { tagged } = require("styp");
 
+const Point = tagged("Point", ["x","y"]);
+let p1 = Point.from({ x:10, y:3, extra:"anything" });
+
+console.log(p1.toString()); // -> Point(10,3)
 ```
 
-
-
-
-### `Instances`
+### Instances
+...
