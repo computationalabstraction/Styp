@@ -7,7 +7,7 @@
 <hr/>
 </div>
 
-Styp (Sum TYPes) in Javascript. The library provides *tagged* and *tagged sum* types, the distribution size of the library is **611** bytes(Gzipped). This libary has been inspired by languages like `Haskell`, `F#` and `OCaml` which provide sum types natively. Styp has also taken inspiration from [daggy](https://github.com/fantasyland/daggy)(a library for creating sum types in Javascript).
+Styp (Sum TYPes) is written in Javascript, the library provides mechanisms for creating *constructors* and *sum types* or *disjoint union types*, the distribution size of the library is **611** bytes(Gzipped). This libary has been inspired by languages like `Haskell`, `F#` and `OCaml` which provide sum types natively. Styp has also taken inspiration from [daggy](https://github.com/fantasyland/daggy)(a library for creating sum types in Javascript).
 
 #### `Example Code`
 ```javascript
@@ -73,7 +73,7 @@ console.log(temp.toString());
 Every constructor functor has these methods: **`is`**, **`from`**,**`toString`**. The instance created by constructor has **`toString`** method and more methods can be added by the user.
 
 #### `sum(typename: String, constructors: Object) -> Object`
-This function helps create sum types it takes *typename* and an object which contains name of type constructor and it's values(if any). The function return an object with all the type constructors as constructor functions(as mentioned above).
+This function helps create a sum type (which is represented as an Object) it takes *typename* and an object which contains names of constructors and their fields(if any). The function returns an object which has all constructor functions (as specified in the passed *constructors* param).
 
 ```javascript
 const { sum } = require("styp");
@@ -88,3 +88,8 @@ const safelyDivide = (n,d) => d? SafeDiv.Succ(n/d): SafeDiv.byZero;
 console.log(safelyDivide(10,2).toString());
 console.log(safelyDivide(2,0).toString());
 ```
+
+#### `Constructors`
+
+
+#### `Instances`
