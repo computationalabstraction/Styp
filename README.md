@@ -109,8 +109,8 @@ const Point = sum("Point", {
 });
 
 console.log(Point.toString()); // -> Point
-console.log(Point.Cartesian.toString()); // -> Point
-console.log(Point.Polar.toString()); // -> Point
+console.log(Point.Cartesian.toString()); // -> Point.Cartesian
+console.log(Point.Polar.toString()); // -> Point.Polar
 ```
 
 #### `{constructor}.is(obj: Object) -> Boolean`
