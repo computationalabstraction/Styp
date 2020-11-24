@@ -92,14 +92,12 @@ console.log(safelyDivide(2,0).toString());
 ### Constructors
 Every constructor function/sum type object has the following methods defined -
 
-* #### `toString`
-* #### `is`
+* #### toString
+* #### is
 
 and
 
-* #### `from` (only defined on constructor functions)
-
-
+* #### from (only defined on constructor functions)
 
 #### `{constructor}.toString() -> String`
 ```javascript
