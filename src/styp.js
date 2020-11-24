@@ -23,9 +23,8 @@ function tagged(typename, fields) {
     if(!fields.length) return { [$type]: typename, is:nis, toString:ntoString }
     const constructor = function (...values) {
         if(values.length < fields.length) throw new TypeError(`This constructor requires ${fields.length} values`);
-        let obj = {};
+        let obj = Object.create(constructor.prototype);
         fields.forEach((v,i) => obj[v] = values[i]);
-        obj.__proto__ = constructor.prototype;
         return Object.freeze(obj);
     };
     Object.assign(constructor.prototype, { [$type]:typename, [$schema]:fields, toString:titoString });
@@ -42,8 +41,7 @@ function sum(typename, constructors) {
     };
     stype.prototype[$cons].forEach(cons => {
         stype[cons] = tagged(`${typename}.${cons}`,constructors[cons]);
-        if(constructors[cons].length) stype[cons].prototype.__proto__ = stype.prototype;
-        else stype[cons].__proto__ = stype.prototype
+        Object.setPrototypeOf(constructors[cons].length?stype[cons].prototype:stype[cons], stype.prototype)
     });
     return stype;
 }
