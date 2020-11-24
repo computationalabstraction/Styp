@@ -99,6 +99,8 @@ and
 
 * #### `from` (only defined on constructor functions)
 
+
+
 #### `{constructor}.toString() -> String`
 ```javascript
 const { tagged } = require("styp");
