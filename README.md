@@ -54,7 +54,7 @@ npm i styp
 > Underconstruction!
 
 #### `tagged(typename: String, fields: Array[String]) -> Function | Object`
-This function takes *typename* and *fields* as params and returns a constructor function for the specified data type. In case of empty fields array this function will return an object which you can use like one valued type.
+This function takes *typename* and *fields* as params and returns a constructor function for the specified data type. In case of an empty *fields* array this function will return an object which you can use like one valued type.
 
 ```javascript
 const { tagged } = require("styp");
@@ -70,7 +70,7 @@ console.log(nil.is(temp));
 console.log(temp.toString());
 ```
 
-Every constructor functor has these methods: **`is`**, **`from`**,**`toString`**. The instance created by constructor has **`toString`** method and more methods can be added by the user.
+Every constructor functor has these methods: **`is`**, **`from`**,**`toString`**. The instance created by constructor has **`toString`** method and more methods can be added by the user more details are given below in the constructors section.
 
 #### `sum(typename: String, constructors: Object) -> Object`
 This function helps create a sum type (which is represented as an Object) it takes *typename* and an object which contains names of constructors and their fields(if any). The function returns an object which has all constructor functions (as specified in the passed *constructors* param).
@@ -89,7 +89,41 @@ console.log(safelyDivide(10,2).toString());
 console.log(safelyDivide(2,0).toString());
 ```
 
-#### `Constructors`
+### `Constructors`
+Every constructor(even on sum type object) has the following methods defined -
+* #### `toString`
+* #### `is`
+* #### `from` (not defined on sum type object)
+
+#### `{constructor}.toString() -> String`
+```javascript
+const { tagged } = require("styp");
+
+const Point = sum("Point", {
+    Cartesian: ["x","y","z"],
+    Polar: ["r","theta"]
+});
+
+console.log(Point.toString()); // -> Point
+```
+
+#### `{constructor}.is(obj: Object) -> Boolean`
+```javascript
+const { tagged } = require("styp");
+
+const Point = tagged("Point", ["x","y"]);
+let p1 = Point(2, 7);
+
+console.log(Point.is(p1));  // -> true
+console.log(Point.is({ random:true }));  // -> false
+```
+
+#### `{constructor}.from(obj: Object) -> Object`
+```javascript
+
+```
 
 
-#### `Instances`
+
+
+### `Instances`
