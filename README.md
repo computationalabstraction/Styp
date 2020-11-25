@@ -135,4 +135,40 @@ console.log(p1.toString()); // -> Point(10,3)
 ```
 
 ### Instances
-...
+Every instance created by a constructor function is immutable. There is one predefined method **`toString`**. More methods can be added to the prototype of the constructor function.
+
+```javascript
+const { tagged } = require("styp");
+
+const Point = tagged("Point", ["x","y"]);
+
+console.log(Point(5,5).toString()); // -> Point(5,5)
+
+Point.prototype.scale = function(n) {
+    return Point(this.x*n,this.y*n);
+}
+
+console.log(Point(5,5).scale(2).toString()); // -> Point(10,10)
+```
+
+There is special method accessible on instances of constructors belonging to sum type object - **`cata`** 
+
+```javascript
+const { sum } = require("styp");
+
+const Point = sum("Point", {
+    Cartesian: ["x","y","z"],
+    Polar: ["r","theta"]
+});
+
+let p1 = Point.Cartesian(2,3);
+let p2 = Point.Polar(1,5);
+
+let doSomething = (point) => point.cata({
+                        Cartesian: c => c.x,
+                        Polar: p => p.r
+                    });
+
+console.log(doSomething(p1)); // -> 2
+console.log(doSomething(p2)); // -> 1
+```
