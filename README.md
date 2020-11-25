@@ -54,7 +54,7 @@ npm i styp
 > Underconstruction!
 
 #### `tagged(typename: String, fields: Array[String]) -> Function | Object`
-This function takes *typename* and *fields* as params and returns a constructor function for the specified data type. In case of an empty *fields* array this function will return an object which you can use like one valued type.
+This function takes *typename* and *fields* as params and returns a constructor function for the specified data type. In case of an empty *fields* array this function will return an object which you can use like a type with only one value.
 
 ```javascript
 const { tagged } = require("styp");
