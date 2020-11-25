@@ -151,7 +151,7 @@ Point.prototype.scale = function(n) {
 console.log(Point(5,5).scale(2).toString()); // -> Point(10,10)
 ```
 
-There is special method accessible on instances of constructors belonging to sum type object - **`cata`** 
+There is special method accessible on instances of constructors belonging to sum types - **`cata`** 
 
 ```javascript
 const { sum } = require("styp");
