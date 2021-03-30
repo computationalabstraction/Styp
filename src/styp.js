@@ -14,10 +14,10 @@ const sis = function(obj) {
             .reduce((acc,v) => acc || this[v].is(obj),false);
 }
 const cata = function (sel) {
-    return this[$cons].reduce((acc, v) => !acc?this[$sumT][v].is(this)?sel[v](this):null:acc,null);
+    return this[$cons].reduce((acc, v) => !acc?(this[$sumT][v].is(this)?sel[v](this):acc):acc,null);
 };
 const nis = function(obj) { return obj == this; };
-const ntoString = function() { return this[$type] };
+const ntoString = function() { return this[$type]; };
 
 function tagged(typename, fields) {
     if(!fields.length) return { [$type]: typename, is:nis, toString:ntoString }
