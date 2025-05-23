@@ -1,8 +1,8 @@
-const $type = Symbol("Type");
-const $sumT = Symbol("SumType");
-const $schema = Symbol("Schema");
-const $cons = Symbol("Constructors");
-const $tag = Symbol("Tag");
+const $type = Symbol.for("Type");
+const $sumT = Symbol.for("SumType");
+const $schema = Symbol.for("Schema");
+const $cons = Symbol.for("Constructors");
+const $tag = Symbol.for("Tag");
 
 // Helper for const properties
 const prop = (obj, prop, value, enumerable=true) => {
@@ -15,7 +15,7 @@ const prop = (obj, prop, value, enumerable=true) => {
     return obj;
 };
 
-const tfrom = function (obj) { return this(...this.prototype[$schema].map((v) => obj?.[v])); }
+
 const tis = function (r) { return r instanceof this; }
 const tctoString = function () { return this.prototype[$type] }
 const titoString = function () {
@@ -35,22 +35,33 @@ const sis = function (obj) {
 const cata = function (sel) {
     const fn = sel?.[this[$tag]] || sel?._;
     if (!fn) throw new Error(`No match for constructor: ${this[$type]}`);
+    if (typeof fn !== "function") throw new TypeError(`Expected function, got ${typeof fn}`);
     return fn(this);
 };
 const nis = function (obj) { return obj === this; };
 const ntoString = function () { return this[$type]; };
 
-const unwrap = function () { 
+const unwrap = function (typefield="$type") { 
     const obj = Object.create(Object.prototype);
-    obj.type = this[$tag] || this[$type];
+    obj[typefield] = this[$tag] || this[$type];
     for (const k of this[$schema]) obj[k] = this[k];
     return obj;
 };
 
-const sfrom = function (obj) {
-    if(!obj?.type) throw new TypeError(`Object must have a 'type' property. Received: ${JSON.stringify(obj)}`);
-    if(!(obj.type in this)) throw new TypeError(`No such constructor ${obj.type} in sum ${this[$tag]}`);
-    return this[obj.type].from(obj);
+const tfrom = function (obj) { 
+    if (typeof obj !== "object" || obj == null) throw new TypeError(`Object expected, got ${typeof obj}`);
+    const result = [];
+    for (const field of this.prototype[$schema]) {
+        if (!(field in obj)) throw new TypeError(`Missing property: ${field}`);
+        result.push(obj[field]);
+    }
+    return this(...result);
+}
+
+const sfrom = function (obj,typefield="$type") {
+    if(!obj?.[typefield]) throw new TypeError(`Object must have a 'type' property. Received: ${JSON.stringify(obj)}`);
+    if(!(obj[typefield] in this)) throw new TypeError(`No such constructor ${obj.type} in sum ${this[$tag]}`);
+    return this[obj[typefield]].from(obj);
 };
 
 function _tagged(typename, fields, process = x => x) {
