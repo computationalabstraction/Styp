@@ -1,22 +1,22 @@
 // rollup.config.js
 import babel from '@rollup/plugin-babel';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs'; // In case future dependencies are CJS
+import commonjs from '@rollup/plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 
-const libraryName = 'styp'; // Global variable name for UMD builds
-const inputFile = 'src/index.js'; // Assuming your main source file is here
+const libraryName = 'styp';
+const inputFile = 'src/index.js';
 
 const commonPlugins = [
-  nodeResolve(), // Resolves node_modules
-  commonjs(),    // Converts CommonJS modules to ES6
+  nodeResolve(),
+  commonjs(),
   babel({
-    babelHelpers: 'bundled', // Bundles Babel helpers
-    exclude: 'node_modules/**', // Don't transpile dependencies
+    babelHelpers: 'bundled',
+    exclude: 'node_modules/**',
     presets: [
       ['@babel/preset-env', {
-        targets: '> 0.25%, not dead, ie 11', // Adjust browser targets as needed
-        // modules: false, // Let Rollup handle modules
+        targets: '> 0.25%, not dead, ie 11',
+        // modules: false,
       }]
     ]
   }),
@@ -73,7 +73,7 @@ export default [
     },
     plugins: [
       ...commonPlugins,
-      terser() // Minify the output
+      terser()
     ],
   }
 ];

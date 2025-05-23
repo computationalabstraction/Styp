@@ -18,6 +18,7 @@
   "files": [
     "dist",
     "src",
+    "static",
     "LICENSE",
     "README.md"
   ],
@@ -54,7 +55,6 @@
     "sum type",
     "product type",
     "tagged union",
-    "pattern matching",
     "functional programming",
     "immutable"
   ]
