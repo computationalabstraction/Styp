@@ -5,7 +5,7 @@ const $cons = Symbol.for("Constructors");
 const $tag = Symbol.for("Tag");
 
 // Helper for const properties
-const prop = (obj, prop, value, enumerable=true) => {
+const prop = (obj, prop, value, enumerable=false) => {
     Object.defineProperty(obj, prop, { 
         value: value, 
         writable: false, 
@@ -14,7 +14,6 @@ const prop = (obj, prop, value, enumerable=true) => {
     });
     return obj;
 };
-
 
 const tis = function (r) { return r instanceof this; }
 const tctoString = function () { return this.prototype[$type] }
@@ -27,14 +26,14 @@ const titoString = function () {
         return val;
     }).join(",")})`;
 };
-const stoString = function() { return this[$tag]; }
+const stoString = function() { return this[$type]; }
 
 const sis = function (obj) {
     return this.prototype[$cons].some(v => this[v].is(obj));
 }
 const cata = function (sel) {
     const fn = sel?.[this[$tag]] || sel?._;
-    if (!fn) throw new Error(`No match for constructor: ${this[$type]}`);
+    if (!fn) throw new Error(`No match for constructor: ${this[$tag]}`);
     if (typeof fn !== "function") throw new TypeError(`Expected function, got ${typeof fn}`);
     return fn(this);
 };
@@ -59,10 +58,29 @@ const tfrom = function (obj) {
 }
 
 const sfrom = function (obj,typefield="$type") {
-    if(!obj?.[typefield]) throw new TypeError(`Object must have a 'type' property. Received: ${JSON.stringify(obj)}`);
-    if(!(obj[typefield] in this)) throw new TypeError(`No such constructor ${obj.type} in sum ${this[$tag]}`);
+    if(!obj?.[typefield]) throw new TypeError(`Object must have a '${typefield}' property. Received: ${JSON.stringify(obj)}`);
+    if(!(obj[typefield] in this)) throw new TypeError(`No such constructor ${obj[typefield]} in sum ${this[$type]}`);
     return this[obj[typefield]].from(obj);
 };
+
+const _reserved = (() => {
+  const o = Object.create(null);
+  ['toString','unwrap','cata',
+    'is','from', '$type', '$sumT', 
+    '$schema', '$cons', '$tag'].forEach(k => { o[k] = 1 });
+  return Object.freeze(o);
+})();
+
+function validateFields (fields) {
+  const seen = Object.create(null)
+  for (let i = 0, n = fields.length; i < n; i++) {
+    const f = fields[i]
+    if (typeof f !== 'string' || !f.length) throw new TypeError(`Field names must be non-empty strings: Received '${f}'`)
+    if (seen[f]) throw new TypeError(`Duplicate field: ${f}`)
+    if (_reserved[f]) throw new TypeError(`Reserved field name: '${f}'. Cannot use names like toString, is, from, etc. or internal symbols as data fields.`)
+    seen[f] = 1
+  }
+}
 
 function _tagged(typename, fields, process = x => x) {
     if (typeof typename != "string") throw new TypeError("Type name must be a string");
@@ -76,25 +94,25 @@ function _tagged(typename, fields, process = x => x) {
         prop(proto, "unwrap", unwrap);
         prop(proto, "prototype", proto);
         prop(proto, $type, typename);
-        prop(proto, $schema, fields);
+        prop(proto, $schema, Object.freeze([]));
         const singleton = Object.create(proto);
-        prop(proto, Symbol.hasInstance, (instance) => {
-            if(instance === singleton) return true;
-            return false;     
-        });
+        prop(proto, Symbol.hasInstance, (instance) => instance === singleton);
         return process(singleton, typename, fields);
     }
+    validateFields(fields);
     const constructor = function (...values) {
         if (values.length !== fields.length) throw new TypeError(`This constructor requires ${fields.length} values`);
         let obj = Object.create(constructor.prototype);
-        fields.forEach((v, i) => obj[v] = values[i]);
+        for(let i = 0; i < fields.length; i++) obj[fields[i]] = values[i];
+        // fields.forEach((v, i) => obj[v] = values[i]);
         obj = process(obj, typename, fields);
         return Object.freeze(obj);
     };
     prop(constructor.prototype, $type, typename);
-    prop(constructor.prototype, $schema, fields);
+    prop(constructor.prototype, $schema, Object.freeze([...fields]));
     prop(constructor.prototype, "toString", titoString);
     prop(constructor.prototype, "unwrap", unwrap);
+    prop(constructor, Symbol.hasInstance, (instance) => instance != null && Object.getPrototypeOf(instance) === constructor.prototype);
     prop(constructor, "is", tis);
     prop(constructor, "from", tfrom);
     prop(constructor, "toString", tctoString);
@@ -110,14 +128,11 @@ function sum(typename, constructors) {
     if (!typename.length) throw new TypeError("Type name cannot be empty");
     if (typeof constructors != "object" || Array.isArray(constructors)) throw new TypeError("Constructors must be an object");
     const stype = Object.create(null);
-    prop(stype, $tag, typename);
+    prop(stype, $type, typename);
     prop(stype, "is", sis);
     prop(stype, "from", sfrom);
     prop(stype, "toString", stoString);
-    prop(stype, Symbol.hasInstance, (instance) => {
-        if(instance?.[$sumT] === stype) return true;
-        return false;
-    });
+    prop(stype, Symbol.hasInstance, (instance) => typeof instance === "object" && instance?.[$sumT] === stype);
     stype.prototype = Object.create(Object.prototype);
     prop(stype.prototype, $sumT, stype);
     prop(stype.prototype, $cons, Object.keys(constructors));

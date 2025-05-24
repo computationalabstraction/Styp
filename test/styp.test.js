@@ -263,8 +263,7 @@ describe('styp', () => {
       test('throws TypeError for invalid fields argument', () => {
         expect(() => tagged("Test", "not-an-array")).toThrow(TypeError);
         expect(() => tagged("Test", null)).toThrow(TypeError);
-        // Note: current implementation might allow non-string field names, but schema implies strings.
-        // If stricter, add tests like: expect(() => tagged("Test", [123])).toThrow(TypeError);
+        expect(() => tagged("Test", [123])).toThrow(TypeError);
       });
 
       test('constructor throws TypeError for incorrect number of arguments', () => {
@@ -283,7 +282,7 @@ describe('styp', () => {
 
       test('from() throws TypeError if fields are missing from input object', () => {
         const TestType = tagged("TestType", ["a", "b"]);
-        expect(() => TestType.from({ a: 1 })).toThrow(TypeError); // Missing 'b'
+        expect(() => TestType.from({ a: 1 })).toThrow(TypeError);
         expect(() => TestType.from({})).toThrow(TypeError);
       });
 
