@@ -1,8 +1,8 @@
-const $type = Symbol.for("Type");
-const $sumT = Symbol.for("SumType");
-const $schema = Symbol.for("Schema");
-const $cons = Symbol.for("Constructors");
-const $tag = Symbol.for("Tag");
+const $type = Symbol.for("_styp_Type");
+const $sumT = Symbol.for("_styp_SumType");
+const $schema = Symbol.for("_styp_Schema");
+const $cons = Symbol.for("_styp_Constructors");
+const $tag = Symbol.for("_styp_Tag");
 
 // Helper for const properties
 const prop = (obj, prop, value, enumerable=false) => {
@@ -153,4 +153,29 @@ function sum(typename, constructors) {
     return stype;
 }
 
-export { tagged, sum };
+function match(stype) {
+    const ctors = stype?.prototype[$cons];
+    if(!ctors) throw new TypeError("Type is not a sum type");
+    if (!ctors.length) throw new TypeError("Type has no constructors");
+    return (cases) => {
+        if("_" in cases && typeof cases._ !== "function") throw new TypeError("Wildcard case must be a function");
+        const wild = cases._;
+        const sel = Object.create(null);
+
+        for (const k of ctors) {
+            if (k in cases) {
+                if (typeof cases[k] !== "function") throw new TypeError(`Case '${k}' must be a function`);
+                sel[k] = cases[k];
+            }
+            else if (wild) sel[k] = wild;
+            else throw new TypeError(`non-exhaustive match, missing branch '${k}'`);
+        }
+
+        return (node) => {
+            if (!stype?.is(node)) throw new TypeError(`match: expected instance of ${stype}, got ${node}`);
+            return node.cata(sel);
+        };
+    };
+};
+
+export { tagged, sum, match };

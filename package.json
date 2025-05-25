@@ -1,7 +1,7 @@
 {
   "name": "styp",
   "version": "0.0.3",
-  "description": "Algebraic Sum and Product Types for JavaScript.",
+  "description": "Algebraic Sum Types for JavaScript.",
   "type": "module",
   "main": "dist/styp.cjs",
   "module": "dist/styp.esm.js",

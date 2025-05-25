@@ -1,4 +1,4 @@
-const { tagged, sum } = require('../dist/styp.cjs');
+const { tagged, sum, match } = require('../dist/styp.cjs');
 
 describe('styp', () => {
   describe('Testing Examples', () => {
@@ -482,6 +482,97 @@ describe('styp', () => {
     });
   });
 
+  describe('match(stype)', () => {
+    const Option = sum("Option", {
+      Some: ["value"],
+      None: []
+    });
+    const EmptySum = sum("EmptySumForMatch", {});
+
+    describe('Valid Usage', () => {
+      const matchOption = match(Option);
+
+      test('creates a matcher function', () => {
+        expect(typeof matchOption).toBe('function');
+      });
+
+      test('matcher function requires cases object', () => {
+        const handleCases = matchOption({
+          Some: ({ value }) => value,
+          None: () => "default"
+        });
+        expect(typeof handleCases).toBe('function');
+      });
+
+      test('executes correct case for variant', () => {
+        const handleCases = matchOption({
+          Some: ({ value }) => `Is Some: ${value}`,
+          None: () => "Is None"
+        });
+        expect(handleCases(Option.Some(10))).toBe("Is Some: 10");
+        expect(handleCases(Option.None)).toBe("Is None");
+      });
+
+      test('executes wildcard case', () => {
+        const handleCases = matchOption({
+          Some: ({ value }) => value,
+          _: () => "wildcard hit"
+        });
+        expect(handleCases(Option.Some(20))).toBe(20);
+        expect(handleCases(Option.None)).toBe("wildcard hit");
+      });
+
+      test('constraints argument does not affect behavior (as currently implemented)', () => {
+        const matchOptionWithConstraints = match(Option, "constraint1", 123);
+         const handleCases = matchOptionWithConstraints({
+          Some: ({ value }) => value,
+          None: () => "default"
+        });
+        expect(handleCases(Option.Some(5))).toBe(5);
+      });
+    });
+
+    describe('Error Handling for match()', () => {
+      test('throws TypeError if stype is not a valid sum type', () => {
+        expect(() => match(null)).toThrow(TypeError);
+        expect(() => match({})).toThrow(TypeError);
+        expect(() => match(tagged("Point",[]))).toThrow(TypeError);
+      });
+
+       test('throws TypeError if sum type has no constructors', () => {
+        expect(() => match(EmptySum)).toThrow(TypeError);
+      });
+
+      test('throws TypeError if cases object is not provided or not an object', () => {
+        const matchOption = match(Option);
+        expect(() => matchOption()).toThrow(TypeError);
+        expect(() => matchOption(null)).toThrow(TypeError);
+        expect(() => matchOption("not-an-object")).toThrow(TypeError);
+      });
+
+      test('throws TypeError for non-exhaustive cases (no wildcard)', () => {
+        const matchOption = match(Option);
+        expect(() => matchOption({ Some: () => {} })).toThrow(TypeError);
+      });
+
+      test('throws TypeError if a case handler is not a function', () => {
+        const matchOption = match(Option);
+        expect(() => matchOption({ Some: "not-a-function", None: () => {} })).toThrow(TypeError);
+        expect(() => matchOption({ Some: () => {}, _: "not-a-function-wildcard" })).toThrow(TypeError);
+      });
+
+      test('matcher execution throws TypeError if node is not an instance of the sum type', () => {
+        const matchOption = match(Option);
+        const handleCases = matchOption({ Some: () => {}, None: () => {} });
+        const AnotherSum = sum("Another", { Variant: []});
+
+        expect(() => handleCases(null)).toThrow(TypeError);
+        expect(() => handleCases({})).toThrow(TypeError);
+        expect(() => handleCases(AnotherSum.Variant)).toThrow(TypeError);
+      });
+    });
+  });
+
   describe('General Immutability and Integrity', () => {
     test('attempting to modify internal Symbol-keyed properties on prototypes should fail silently or throw', () => {
       const TestType = tagged("TestImm", ["a"]);
@@ -490,13 +581,13 @@ describe('styp', () => {
       // A direct attempt like TestType.prototype[Symbol.for("Type")] = "Hacked";
       // might not throw if the symbol isn't identical, or might work if it's a new property.
       // The protection is against accidental overwrite of the *exact* symbol-keyed property.
-      const originalTypeName = TestType.prototype[Object.getOwnPropertySymbols(TestType.prototype).find(s => s.toString() === 'Symbol(Type)')];
+      const originalTypeName = TestType.prototype[Object.getOwnPropertySymbols(TestType.prototype).find(s => s.toString() === 'Symbol(_styp_Type)')];
       try {
-        TestType.prototype[Object.getOwnPropertySymbols(TestType.prototype).find(s => s.toString() === 'Symbol(Type)')] = "Hacked";
+        TestType.prototype[Object.getOwnPropertySymbols(TestType.prototype).find(s => s.toString() === 'Symbol(_styp_Type)')] = "Hacked";
       } catch (e) {
         // Expected to throw or be prevented
       }
-      expect(TestType.prototype[Object.getOwnPropertySymbols(TestType.prototype).find(s => s.toString() === 'Symbol(Type)')]).toBe(originalTypeName);
+      expect(TestType.prototype[Object.getOwnPropertySymbols(TestType.prototype).find(s => s.toString() === 'Symbol(_styp_Type)')]).toBe(originalTypeName);
 
     });
 
