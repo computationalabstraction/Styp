@@ -75,8 +75,6 @@ Or from JSDelivr:
 <script src="https://cdn.jsdelivr.net/npm/styp"></script>
 ```
 
------
-
 ## Documentation
 > Evolving! 
 
