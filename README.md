@@ -80,13 +80,19 @@ Or from JSDelivr:
 
 `⚠️ Note`: This doc tracks an unreleased update, published version may differ.
 
-### `tagged(typename: String, fields: Array[String]) -> Function | Object`
+### Core Functions
+
+#### `tagged(typename: String, fields: Array[String], structural: Boolean = false) -> Function | Object`
 
 This function creates a constructor for a "product type" (a type with a fixed set of named fields).
 
   * `typename`: A string representing the name of the type.
   * `fields`: An array of strings, where each string is a field name for the type.
-
+  * `structural` (optional, default: `false`): A boolean flag to determine typing behavior for `instanceof` checks.
+      * `false` (default): Nominal typing.
+      * `true`: Structural typing.
+        (See "Typing: Nominal vs. Structural" section for details.)
+  
 **Returns:**
 
   * If `fields` is not empty, it returns a **constructor function**.
@@ -109,13 +115,23 @@ let temp = Nil;
 console.log(Nil.is(temp)); // -> true
 console.log(temp.toString()); // -> "Nil"
 console.log(Nil.unwrap()); // -> { $type: "Nil" }
+
+// Structural Point type
+const StructPoint = tagged("StructPoint", ["x", "y"], true);
+const sp1 = StructPoint(5, 15);
+console.log(sp1 instanceof StructPoint); // -> true
+console.log({x:1, y:2, z:3} instanceof StructPoint); // -> true (has x and y)
+
+const AnyObjNil = tagged("AnyObjNil", [], true); // Structural singleton
+console.log({} instanceof AnyObjNil); // -> true (any object is an instance)
+console.log(AnyObjNil.is({})); // -> true (any object is an instance)
 ```
 
 Instances created by `tagged` constructors are **immutable** (frozen with `Object.freeze`).
 
 -----
 
-### `sum(typename: String, constructors: Object) -> Object`
+#### `sum(typename: String, constructors: Object, structural: Boolean = false) -> Object`
 
 This function creates a "sum type" (or tagged union), which is a type that can take on one of several distinct forms (variants), each with its own potential fields.
 
@@ -123,6 +139,7 @@ This function creates a "sum type" (or tagged union), which is a type that can t
   * `constructors`: An object where:
       * Keys are strings representing the names of the variant constructors (e.g., "Some", "None").
       * Values are arrays of strings, representing the field names for that specific variant. An empty array `[]` means the variant has no fields.
+  * `structural` (optional, default: `false`): A boolean flag passed down to its variant constructors, influencing their `instanceof` behavior and consequently the sum type's `instanceof` behavior. (See "Typing: Nominal vs. Structural" section.)
 
 **Returns:** An **object** that acts as a namespace for the sum type and its variant constructors.
 
@@ -139,6 +156,7 @@ const failure = Result.Err("Something broke.");
 
 console.log(success.toString()); // -> Result.Ok(Everything went well!)
 console.log(Result.Ok.is(success)); // -> true
+console.log(failue instanceof Result.Err); // -> true
 console.log(Result.is(failure)); // -> true (it's an instance of the Result sum type)
 console.log(failure.unwrap("kind")); // -> { kind: "Err", message: "Something broke." }
 
@@ -151,15 +169,19 @@ const HttpMethod = sum("HttpMethod", {
 
 const method = HttpMethod.GET; // 'GET' is a singleton variant
 console.log(HttpMethod.GET.toString()); // -> HttpMethod.GET
+
+// Structural sum type
+const StructResult = sum("StructResult", { Ok: ["data"], Err: ["message"] }, true);
+const structErrObj = { message: "Structural error" }; // A plain object
+console.log(structErrObj instanceof StructResult.Err); // -> true
+console.log(structErrObj instanceof StructResult);    // -> true
 ```
 
 Each variant constructor (e.g., `Result.Ok`) behaves like a type created by `tagged()`. Instances of variants are also **immutable**.
 
 -----
 
-### `match(stype: Object) -> Function`
-
-`⚠️ Note`: It is currently a thin wrapper around the `cata` method, offering a curried pointfree way to structure functions around case analysis. It serves as a placeholder for more advanced pattern matching capabilities planned for future versions of Styp. As such, its API and behavior are subject to significant changes in future releases.
+#### `match(stype: Object) -> Function`
 
 Provides a functional approach for pattern matching on instances of a sum type. It helps ensure that all cases (variants) of a sum type are handled.
 
@@ -181,7 +203,7 @@ import { sum, match } from "styp";
 const Option = sum("Option", {
     Some: ["value"],
     None: []
-});
+}, true); // structural = true
 
 const describeOption = match(Option)({
     Some: ({ value }) => `It's Some containing: ${value}`,
@@ -194,6 +216,9 @@ const option2 = Option.None;
 console.log(describeOption(option1)); // -> "It's Some containing: 42"
 console.log(describeOption(option2)); // -> "It's None"
 
+// THIS WOULD THROW!
+// console.log(describeOption({ value: 42 }))
+
 // Example with wildcard
 const handleResult = match(Result)({ // Assuming 'Result' sum type from previous example
     Ok: ({ data }) => `Success: ${data}`,
@@ -203,6 +228,31 @@ const handleResult = match(Result)({ // Assuming 'Result' sum type from previous
 console.log(handleResult(Result.Ok("Data loaded")));
 console.log(handleResult(Result.Err("Network timeout")));
 ```
+`⚠️ Note`: 
+- `match` is currently a thin wrapper around the `cata` method, offering a curried pointfree way to structure functions around case analysis. It serves as a placeholder for more advanced pattern matching capabilities planned for future versions of Styp. As such, its API and behavior are subject to significant changes in future releases.
+- `match` with structural types requires "true" instances created by Styp (i.e., objects that have internal Styp symbols like `[$tag]`). While a plain object might pass an  `instanceof` check for a structural type (e.g.,`plainObj instanceof MyStructuralVariant` ), passing `plainObj`directly to the matcher function will result in an error. Always convert such plain objects to true Styp instances using`.from()`on the sum type or variant constructor before matching. e.g., `MySumType.from(plainObj)` or `MyVariant.from(plainObj)`.
+
+-----
+
+### Typing: Nominal (Default) vs. Structural (`structural` flag)
+
+Styp allows you to control the behavior of the `instanceof` operator for types created with `tagged` and `sum` using the `structural` boolean flag. This is achieved by customizing `Symbol.hasInstance`.
+
+#### Nominal Typing (`structural: false` - Default)
+
+This is the standard JavaScript way of checking types.
+
+  * `instance instanceof TaggedConstructor`: True if `instance` was created by `TaggedConstructor` (prototype chain check).
+  * `instance instanceof SingletonType`: True only if `instance` is the exact singleton object (`===`).
+  * `instance instanceof SumType`: True if `instance` is a "true" instance of one of its variants and carries an internal Styp symbol (`[$sumT]`) identifying it as part of the sum type.
+
+#### Structural Typing (`structural: true`)
+
+Type compatibility is determined by the object's "shape" (presence of fields) rather than its specific constructor or prototype chain.
+
+  * `obj instanceof TaggedConstructor`: True if `obj` is a non-null object and possesses all the fields defined for `TaggedConstructor` as its own properties. It does not check property types or disallow extra properties.
+  * `obj instanceof SingletonType`: True if `obj` is **any non-null object**. This check is very broad. For example, if `Empty = tagged("Empty", [], true)`, then `{} instanceof Empty` will be `true`, and indeed, *any* object `obj` will result in `obj instanceof Empty` being `true`.
+  * `obj instanceof SumType`: True if `obj instanceof VariantConstructor` is true for *any* of the `SumType`'s variants.
 
 -----
 
@@ -393,5 +443,3 @@ let anOption = Option.Some(5);
 console.log(anOption.map(v => v * 2).toString()); // -> Option.Some(10)
 console.log(Option.None.map(v => v * 2).toString()); // -> Option.None
 ```
-
------

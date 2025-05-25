@@ -37,7 +37,7 @@ const cata = function (sel) {
     if (typeof fn !== "function") throw new TypeError(`Expected function, got ${typeof fn}`);
     return fn(this);
 };
-const nis = function (obj) { return obj === this; };
+// const nis = function (obj) { return obj === this; };
 const ntoString = function () { return this[$type]; };
 
 const unwrap = function (typefield="$type") { 
@@ -82,13 +82,13 @@ function validateFields (fields) {
   }
 }
 
-function _tagged(typename, fields, process = x => x) {
+function _tagged(typename, fields, structural=false, process = x => x) {
     if (typeof typename != "string") throw new TypeError("Type name must be a string");
     if (!typename.length) throw new TypeError("Type name cannot be empty");
     if (!Array.isArray(fields)) throw new TypeError("Fields must be an array");
     if (!fields.length) {
         const proto = Object.create(Object.prototype);
-        prop(proto, "is", nis);
+        prop(proto, "is", tis);
         prop(proto, "from", function () { return this; });
         prop(proto, "toString", ntoString);
         prop(proto, "unwrap", unwrap);
@@ -96,7 +96,14 @@ function _tagged(typename, fields, process = x => x) {
         prop(proto, $type, typename);
         prop(proto, $schema, Object.freeze([]));
         const singleton = Object.create(proto);
-        prop(proto, Symbol.hasInstance, (instance) => instance === singleton);
+        if (structural) {
+            prop(singleton, Symbol.hasInstance, (instance) => {
+                return typeof instance === "object" && instance != null;
+            });
+        } 
+        else {
+            prop(proto, Symbol.hasInstance, (instance) => instance === singleton);
+        }
         return process(singleton, typename, fields);
     }
     validateFields(fields);
@@ -112,18 +119,32 @@ function _tagged(typename, fields, process = x => x) {
     prop(constructor.prototype, $schema, Object.freeze([...fields]));
     prop(constructor.prototype, "toString", titoString);
     prop(constructor.prototype, "unwrap", unwrap);
-    prop(constructor, Symbol.hasInstance, (instance) => instance != null && Object.getPrototypeOf(instance) === constructor.prototype);
+    if(structural) {
+        prop(constructor, Symbol.hasInstance, (instance) => {
+                if (typeof instance !== "object" || instance == null) return false;
+                for (const field of fields) {
+                    if(!instance.hasOwnProperty(field)) return false;
+                    // if (!(field in instance)) return false;
+                }
+                return true;
+            }
+        );
+    }
+    else {
+        prop(constructor, Symbol.hasInstance, (instance) => 
+            instance != null && Object.getPrototypeOf(instance) === constructor.prototype);
+    }
     prop(constructor, "is", tis);
     prop(constructor, "from", tfrom);
     prop(constructor, "toString", tctoString);
     return constructor;
 }
 
-function tagged(typename, fields) {
-    return _tagged(typename, fields);
+function tagged(typename, fields, structural=false) {
+    return _tagged(typename, fields, structural);
 }
 
-function sum(typename, constructors) {
+function sum(typename, constructors, structural=false) {
     if (typeof typename != "string") throw new TypeError("Type name must be a string");
     if (!typename.length) throw new TypeError("Type name cannot be empty");
     if (typeof constructors != "object" || Array.isArray(constructors)) throw new TypeError("Constructors must be an object");
@@ -132,7 +153,14 @@ function sum(typename, constructors) {
     prop(stype, "is", sis);
     prop(stype, "from", sfrom);
     prop(stype, "toString", stoString);
-    prop(stype, Symbol.hasInstance, (instance) => typeof instance === "object" && instance?.[$sumT] === stype);
+    if(structural) {
+        prop(stype, Symbol.hasInstance, (instance) => 
+            stype.prototype[$cons].some(variant => instance instanceof stype[variant]));
+    }
+    else {
+        prop(stype, Symbol.hasInstance, (instance) => 
+            typeof instance === "object" && instance?.[$sumT] === stype);
+    }
     stype.prototype = Object.create(Object.prototype);
     prop(stype.prototype, $sumT, stype);
     prop(stype.prototype, $cons, Object.keys(constructors));
@@ -145,6 +173,7 @@ function sum(typename, constructors) {
         prop(stype, cons, _tagged(
             `${typename}.${cons}`,
             constructors[cons],
+            structural,
             obj => prop(obj, $tag, cons)
         ));
 
@@ -173,7 +202,11 @@ function match(stype) {
 
         return (node) => {
             if (!stype?.is(node)) throw new TypeError(`match: expected instance of ${stype}, got ${node}`);
-            return node.cata(sel);
+            if(node[$tag] !== undefined) return node.cata(sel);
+            else {
+                // for structurally matched plain objects.
+                throw new Error(`Object structurally matches some variant of sum type '${stype}' but 'match' (via 'cata') is not currently supported on plain objects. Consider converting to a true instance using '.from()' first.`);
+            }
         };
     };
 };

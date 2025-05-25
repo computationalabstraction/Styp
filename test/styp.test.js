@@ -60,68 +60,29 @@ describe('styp', () => {
       });
 
       expect(Expr.Lit("bool", false).cata({
-        Var: x => x,
-        App: x => x,
         Lit: x => x.val,
-        Lam: x => x,
-        Cond: x => x,
-        Let: x => x,
-        BinOp: x => x,
-        UnOp: x => x,
-        Pair: x => x,
-        Fix: x => x,
+        _: x => x
       })).toEqual(false);
 
       expect(Expr.Lit("bool", true).cata({
-        Var: x => x,
-        App: x => x,
+
         Lit: x => x.val,
-        Lam: x => x,
-        Cond: x => x,
-        Let: x => x,
-        BinOp: x => x,
-        UnOp: x => x,
-        Pair: x => x,
-        Fix: x => x,
+        _: x => x
       })).toEqual(true);
 
       expect(Expr.Lit("null", null).cata({
-        Var: x => x,
-        App: x => x,
         Lit: x => x.val,
-        Lam: x => x,
-        Cond: x => x,
-        Let: x => x,
-        BinOp: x => x,
-        UnOp: x => x,
-        Pair: x => x,
-        Fix: x => x,
+        _: x => x
       })).toEqual(null);
 
       expect(Expr.Lit("undef", undefined).cata({
-        Var: x => x,
-        App: x => x,
         Lit: x => x.val,
-        Lam: x => x,
-        Cond: x => x,
-        Let: x => x,
-        BinOp: x => x,
-        UnOp: x => x,
-        Pair: x => x,
-        Fix: x => x,
+        _: x => x
       })).toEqual(undefined);
 
       expect(Expr.Lit("temp", [true, false]).cata({
-        Var: x => x,
-        App: x => x,
         Lit: x => x.val,
-        Lam: x => x,
-        Cond: x => x,
-        Let: x => x,
-        BinOp: x => x,
-        UnOp: x => x,
-        Pair: x => x,
-        Fix: x => x,
+        _: x => x
       })).toEqual([true, false]);
     });
   });
@@ -482,6 +443,191 @@ describe('styp', () => {
     });
   });
 
+  describe('Structural Typing with `structural` flag and instanceof', () => {
+    describe('tagged() - structural vs. nominal instanceof', () => {
+      const NominalPoint = tagged("NominalPoint", ["x", "y"]);
+      const StructuralPoint = tagged("StructuralPoint", ["x", "y"], true); // structural = true
+      const AnotherNominalPoint = tagged("AnotherNominalPoint", ["x", "y"]);
+      const DifferentShape = tagged("DifferentShape", ["a", "b"]);
+
+      const np1 = NominalPoint(1, 2);
+      const sp1 = StructuralPoint(1, 2);
+      const anp1 = AnotherNominalPoint(1, 2);
+      const plainObjXY = { x: 1, y: 2 };
+      const plainObjAB = { a: 1, b: 2 };
+      const plainObjWithExtra = { x: 1, y: 2, z: 3 };
+      const plainObjMissing = { x: 1 };
+
+      test('Nominal tagged type instanceof checks', () => {
+        expect(np1 instanceof NominalPoint).toBe(true);
+        expect(sp1 instanceof NominalPoint).toBe(false);
+        expect(anp1 instanceof NominalPoint).toBe(false);
+        expect(plainObjXY instanceof NominalPoint).toBe(false);
+      });
+
+      test('Structural tagged type instanceof checks', () => {
+        expect(sp1 instanceof StructuralPoint).toBe(true);
+        expect(np1 instanceof StructuralPoint).toBe(true);
+        expect(anp1 instanceof StructuralPoint).toBe(true);
+        expect(plainObjXY instanceof StructuralPoint).toBe(true);
+        expect(plainObjWithExtra instanceof StructuralPoint).toBe(true);
+        expect(plainObjMissing instanceof StructuralPoint).toBe(false);
+        expect(plainObjAB instanceof StructuralPoint).toBe(false);
+        expect(null instanceof StructuralPoint).toBe(false);
+        expect(undefined instanceof StructuralPoint).toBe(false);
+        expect(DifferentShape(1, 2) instanceof StructuralPoint).toBe(false);
+      });
+
+      test('Nominal tagged type .is() checks (should align with nominal instanceof)', () => {
+        expect(NominalPoint.is(np1)).toBe(true);
+        expect(NominalPoint.is(sp1)).toBe(false);
+      });
+
+      test('Structural tagged type .is() checks (should align with structural instanceof)', () => {
+        expect(StructuralPoint.is(sp1)).toBe(true);
+        expect(StructuralPoint.is(np1)).toBe(true);
+        expect(StructuralPoint.is(plainObjXY)).toBe(true);
+      });
+
+      const NominalUnitS = tagged("NominalUnitS", [], false);
+      const StructuralUnitS = tagged("StructuralUnitS", [], true);
+
+      test('Nominal singleton instanceof checks', () => {
+        expect(NominalUnitS instanceof NominalUnitS).toBe(true);
+        expect(StructuralUnitS instanceof NominalUnitS).toBe(false);
+        expect({} instanceof NominalUnitS).toBe(false);
+      });
+
+      test('Structural singleton instanceof checks (field presence is key, empty schema means any object with no *required* fields matches)', () => {
+        expect(StructuralUnitS instanceof StructuralUnitS).toBe(true);
+        expect(NominalUnitS instanceof StructuralUnitS).toBe(true);
+        expect({} instanceof StructuralUnitS).toBe(true);
+        expect({ a: 1 } instanceof StructuralUnitS).toBe(true);
+        expect(null instanceof StructuralUnitS).toBe(false);
+      });
+    });
+
+    describe('sum() - structural vs. nominal instanceof', () => {
+      const NomOption = sum("NomOption", {
+        Some: ["value"],
+        None: []
+      }, false);
+
+      const StructOption = sum("StructOption", {
+        Some: ["value"],
+        None: []
+      }, true);
+
+      const nomSome = NomOption.Some(10);
+      const nomNone = NomOption.None;
+      const structSome = StructOption.Some(10);
+      const structNone = StructOption.None;
+      const plainObjValue = { value: 10 };
+      const plainObjEmpty = {};
+
+      test('Nominal sum type (NomOption) instanceof checks for the sum type itself', () => {
+        expect(nomSome instanceof NomOption).toBe(true);
+        expect(nomNone instanceof NomOption).toBe(true);
+        expect(structSome instanceof NomOption).toBe(false);
+        expect(plainObjValue instanceof NomOption).toBe(false);
+      });
+
+      test('Structural sum type (StructOption) instanceof checks for the sum type itself', () => {
+        expect(structSome instanceof StructOption).toBe(true);
+        expect(structNone instanceof StructOption).toBe(true);
+
+        expect(nomSome instanceof StructOption).toBe(true);
+
+        expect(nomNone instanceof StructOption).toBe(true);
+
+        expect(plainObjValue instanceof StructOption).toBe(true);
+        expect(plainObjEmpty instanceof StructOption).toBe(true);
+        expect({ unrelated: 1 } instanceof StructOption).toBe(true);
+
+        const AnotherStructType = tagged("AnotherStruct", ["value"], true);
+        const anotherStructInstance = AnotherStructType(100);
+        expect(anotherStructInstance instanceof StructOption).toBe(true);
+
+        const MismatchedStructType = tagged("MismatchedStruct", ["val"], true);
+        const mismatchedInstance = MismatchedStructType(100);
+        expect(mismatchedInstance instanceof StructOption).toBe(true); // Matches None (singleton matches any object)
+      });
+
+      test('Nominal sum type variant (NomOption.Some) instanceof checks', () => {
+        expect(nomSome instanceof NomOption.Some).toBe(true);
+        expect(structSome instanceof NomOption.Some).toBe(false);
+        expect(plainObjValue instanceof NomOption.Some).toBe(false);
+      });
+
+      test('Structural sum type variant (StructOption.Some) instanceof checks', () => {
+        expect(structSome instanceof StructOption.Some).toBe(true);
+        expect(nomSome instanceof StructOption.Some).toBe(true);
+        expect(plainObjValue instanceof StructOption.Some).toBe(true);
+        expect({ value: 20, extra: 1 } instanceof StructOption.Some).toBe(true);
+        expect({ val: 10 } instanceof StructOption.Some).toBe(false);
+        expect(structNone instanceof StructOption.Some).toBe(false);
+      });
+
+      test('Structural sum type singleton variant (StructOption.None) instanceof checks', () => {
+        expect(structNone instanceof StructOption.None).toBe(true);
+        expect(nomNone instanceof StructOption.None).toBe(true);
+        expect(plainObjEmpty instanceof StructOption.None).toBe(true);
+        expect(plainObjValue instanceof StructOption.None).toBe(true);
+        expect(null instanceof StructOption.None).toBe(false);
+      });
+
+      // Test interaction with .is()
+      test('Nominal sum type .is() checks', () => {
+        expect(NomOption.is(nomSome)).toBe(true);
+        expect(NomOption.is(structSome)).toBe(false);
+        expect(NomOption.Some.is(nomSome)).toBe(true);
+        expect(NomOption.Some.is(structSome)).toBe(false);
+      });
+
+      test('Structural sum type .is() checks (relies on instanceof)', () => {
+        expect(StructOption.is(structSome)).toBe(true);
+        expect(StructOption.is(nomSome)).toBe(true);
+        expect(StructOption.is(plainObjValue)).toBe(true);
+
+        expect(StructOption.Some.is(structSome)).toBe(true);
+        expect(StructOption.Some.is(nomSome)).toBe(true);
+        expect(StructOption.Some.is(plainObjValue)).toBe(true);
+      });
+    });
+
+    describe('Structural checks with different field orders in plain objects', () => {
+      const StructuralOrder = tagged("StructuralOrder", ["a", "b", "c"], true);
+      const objABC = { a: 1, b: 2, c: 3 };
+      const objCBA = { c: 3, b: 2, a: 1 };
+      const objBAC = { b: 2, a: 1, c: 3 };
+
+      test('instanceof should not depend on field order in plain objects for structural types', () => {
+        expect(objABC instanceof StructuralOrder).toBe(true);
+        expect(objCBA instanceof StructuralOrder).toBe(true);
+        expect(objBAC instanceof StructuralOrder).toBe(true);
+      });
+    });
+
+  //   describe('Structural checks with prototypal inheritance in plain objects', () => {
+  //     const StructuralProto = tagged("StructuralProto", ["x", "y"], true);
+  //     const parentObj = { x: 1 };
+  //     const childObj = Object.create(parentObj);
+  //     childObj.y = 2; // x is on parent, y is on child
+
+  //     const childObjOwn = { x: 1, y: 2 }; // All own properties
+
+  //     test('instanceof structural check should find properties on prototype chain', () => {
+  //       expect(childObj instanceof StructuralProto).toBe(true);
+  //       expect(childObjOwn instanceof StructuralProto).toBe(true);
+  //     });
+
+  //     const StructuralStrictOwn = tagged("StructuralStrictOwn", ["x", "y"], true);
+  //     // If you wanted a structural check that ONLY considers own properties:
+  //     // You'd have to modify Symbol.hasInstance to use instance.hasOwnProperty(field)
+  //     // For now, we test the current behavior (using 'in').
+  //   });
+  });
+
   describe('match(stype)', () => {
     const Option = sum("Option", {
       Some: ["value"],
@@ -524,7 +670,7 @@ describe('styp', () => {
 
       test('constraints argument does not affect behavior (as currently implemented)', () => {
         const matchOptionWithConstraints = match(Option, "constraint1", 123);
-         const handleCases = matchOptionWithConstraints({
+        const handleCases = matchOptionWithConstraints({
           Some: ({ value }) => value,
           None: () => "default"
         });
@@ -536,10 +682,10 @@ describe('styp', () => {
       test('throws TypeError if stype is not a valid sum type', () => {
         expect(() => match(null)).toThrow(TypeError);
         expect(() => match({})).toThrow(TypeError);
-        expect(() => match(tagged("Point",[]))).toThrow(TypeError);
+        expect(() => match(tagged("Point", []))).toThrow(TypeError);
       });
 
-       test('throws TypeError if sum type has no constructors', () => {
+      test('throws TypeError if sum type has no constructors', () => {
         expect(() => match(EmptySum)).toThrow(TypeError);
       });
 
@@ -552,19 +698,19 @@ describe('styp', () => {
 
       test('throws TypeError for non-exhaustive cases (no wildcard)', () => {
         const matchOption = match(Option);
-        expect(() => matchOption({ Some: () => {} })).toThrow(TypeError);
+        expect(() => matchOption({ Some: () => { } })).toThrow(TypeError);
       });
 
       test('throws TypeError if a case handler is not a function', () => {
         const matchOption = match(Option);
-        expect(() => matchOption({ Some: "not-a-function", None: () => {} })).toThrow(TypeError);
-        expect(() => matchOption({ Some: () => {}, _: "not-a-function-wildcard" })).toThrow(TypeError);
+        expect(() => matchOption({ Some: "not-a-function", None: () => { } })).toThrow(TypeError);
+        expect(() => matchOption({ Some: () => { }, _: "not-a-function-wildcard" })).toThrow(TypeError);
       });
 
       test('matcher execution throws TypeError if node is not an instance of the sum type', () => {
         const matchOption = match(Option);
-        const handleCases = matchOption({ Some: () => {}, None: () => {} });
-        const AnotherSum = sum("Another", { Variant: []});
+        const handleCases = matchOption({ Some: () => { }, None: () => { } });
+        const AnotherSum = sum("Another", { Variant: [] });
 
         expect(() => handleCases(null)).toThrow(TypeError);
         expect(() => handleCases({})).toThrow(TypeError);
